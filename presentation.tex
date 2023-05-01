@@ -1,0 +1,135 @@
+% !TeX document-id = {2870843d-1baa-4f6a-bd0a-a5c796104a32}
+% !BIB TS-program = biber
+% !TeX encoding = UTF-8
+% TU Delft beamer template
+
+\documentclass[aspectratio=43]{beamer}
+\usepackage[english]{babel}
+\usepackage{csquotes}
+\usepackage{calc}
+\usepackage[absolute,overlay]{textpos}
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{mathtools}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{comment}
+\usepackage{siunitx}
+\usepackage{MnSymbol,wasysym}
+\usepackage{array}
+\usepackage{qrcode}
+\usepackage{hyperref}
+\usepackage{physics}
+\usepackage{qcircuit}
+
+\setbeamertemplate{navigation symbols}{} % remove navigation symbols
+\mode<presentation>{\usetheme[verticalbar=false]{tud}}
+
+% BIB SETTINGS
+\usepackage[
+    backend=biber,
+    giveninits=true,
+    maxnames=30,
+    maxcitenames=20,
+    uniquename=init,
+    url=false,
+    style=authoryear,
+]{biblatex}
+\addbibresource{bibfile.bib}
+\setlength\bibitemsep{0.3cm} % space between entries in the reference list
+\renewcommand{\bibfont}{\normalfont\scriptsize}
+\setbeamerfont{footnote}{size=\tiny}
+\renewcommand{\cite}[1]{\footnote<.->[frame]{\fullcite{#1}}}
+\setlength{\TPHorizModule}{\paperwidth}
+\setlength{\TPVertModule}{\paperheight}
+
+\newcommand{\absimage}[4][0.5,0.5]{%
+	\begin{textblock}{#3}%width
+		[#1]% alignment anchor within image (centered by default)
+		(#2)% position on the page (origin is top left)
+		\includegraphics[width=#3\paperwidth]{#4}%
+\end{textblock}}
+
+\newcommand{\mininomen}[2][1]{{\let\thefootnote\relax%
+	\footnotetext{\begin{tabular}{*{#1}{@{\!}>{\centering\arraybackslash}p{1em}@{\;}p{\textwidth/#1-2em}}}%
+	#2\end{tabular}}}}
+
+% New commands (Giorgio)
+\newcommand{\R}{\mathbb{R}}  % real set
+% \newcommand{\pdv}[2]{\frac{\partial #1}{\partial #2}}
+
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+
+\title[]{Applied Quantum Algorithms - Lecture 8 - Quantum Kernel Methods}
+\institute[]{Delft University of Technology, The Netherlands}
+\author{Giorgio Tosti Balducci}
+\date{Apr 26, 2023}
+
+
+\begin{document}
+\section{Introduction}
+{
+\setbeamertemplate{footline}{\usebeamertemplate*{minimal footline}}
+\frame{\titlepage}
+}
+
+\begin{frame}{Contents} % some commands, e.g. \verb require [fragile]
+\begin{enumerate}
+  \item Learning with quantum kernels
+  \item Demos on PennyLane and Qiskit
+\end{enumerate}
+\end{frame}
+
+\section{Lecture}
+
+\begin{frame}{example frame}
+    
+\end{frame}
+
+% \section{Conclusion}
+% \begin{frame}[fragile]{animation}
+%   \vfill
+%   Some commands take optional arguments in the form of \verb|<x-y>|,
+%   where \verb|x| is the first `sub-frame' on which the context is shown,
+%   and \verb|y| is the last. \verb|x| or \verb|y| can be replaced by \verb|+|,
+%   referring to `the next sub-frame'. 
+%   \vfill
+%   \begin{columns}[onlytextwidth]
+%   \begin{column}{.5\textwidth}
+%     \begin{enumerate}
+%       \item<+-> uncovered\ldots
+%       \item<+-> one\ldots
+%       \item<+-> by\ldots
+%       \item<+-> one.
+%     \end{enumerate}
+%     \end{column}
+%   \begin{column}{.5\textwidth}
+%       Using only:\only<1>{1}\only<2>{2}\only<3>{3}
+
+%       Using onslide:\onslide<1>{1}\onslide<2>{2}\onslide<3>{3}
+
+%       Using pause:\pause1\pause2\pause3
+%   \end{column}
+%   \end{columns}
+%   \vfill
+%   For more advanced animations, see \S 14 of the manual:\\
+%   \url{https://www.ctan.org/pkg/beamer}
+%   % \url{https://www.ctan.org/pkg/animate}\\
+%   % \url{https://www.ctan.org/pkg/media9}
+%   \vfill
+%   % \transduration{2} automatic progression of slides
+%   \transpush<1>
+% \end{frame}
+
+
+\begin{frame}[allowframebreaks,t]{\bibname}
+	% the 'I' is caused by 'allowframebreaks'
+	\AtNextBibliography{\footnotesize}% or in the preamble \AtBeginBibliography{\small}
+	\printbibliography
+\end{frame}
+
+
+\end{document}
+

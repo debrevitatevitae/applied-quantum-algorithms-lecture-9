@@ -1,0 +1,86 @@
+\documentclass[border = 0.2cm]{standalone}
+
+\usepackage{tikz}
+
+\begin{document}
+
+    \newcommand{\inputnum}{3}
+    \newcommand{\hiddennum}{5}
+    \newcommand{\outputnum}{3}
+    \newcommand{\hiddenlayersnum}{2}
+    
+    \begin{tikzpicture}
+
+        % Input layer
+        \foreach \i in {1,...,\inputnum}
+        {
+            \node[circle, minimum size=6mm, draw=black, thick] (Input-\i) at (0, -\i) {};
+        }
+
+        % Hidden Layers
+        \foreach \l in {1,...,\hiddenlayersnum}
+        {
+            \foreach \i in {1,...,\hiddennum}
+            {
+                \node[circle, minimum size=6mm, draw=black, thick, yshift=(\hiddennum-\inputnum)*5 mm] (Hidden\l-\i) at (2.5*\l, -\i) {};
+            }
+        }
+        \node also [label={[fill=white]below:$ W_1, \,b_1 $}] (Hidden1-\hiddennum);
+        \node also [label={[fill=white]below:$ W_2, \,b_2 $}] (Hidden2-\hiddennum);
+        
+        % Output Layer
+        \foreach \i in {1,...,\outputnum}
+        {
+            \node[circle, minimum size=6mm, draw=black, thick, yshift=(\outputnum-\inputnum)*5 mm] (Output-\i) at (7.5, -\i) {};
+        }
+        \node also [label={[fill=white]below:$ W_3, \,b_3 $}] (Output-\outputnum);
+            
+        % Connections
+        % In-Hidden
+        \foreach \i in {1,...,\inputnum}
+        {
+            \foreach \j in {1,...,\hiddennum}
+            {
+                \draw[->, shorten >=1pt] (Input-\i) -- (Hidden1-\j);
+            }
+        }
+
+        % Hidden\i-Hidden\j
+        \foreach \l in {1}
+        {
+            \foreach \i in {1,...,\hiddennum}
+            {
+                \foreach \j in {1,...,\hiddennum}
+                {
+                    \draw[->, shorten >=1pt] (Hidden1-\i) -- (Hidden2-\j);
+                }
+            }
+        }
+
+        % Hidden-Out
+        \foreach \i in {1,...,\hiddennum}
+        {
+            \foreach \j in {1,...,\outputnum}
+            {
+                \draw[->, shorten >=1pt] (Hidden2-\i) -- (Output-\j);
+            }
+        }
+
+        % Input labels
+        \foreach \i in {1,2,3}
+        {            
+            \draw[<-, shorten <=1pt] (Input-\i) -- ++(-.5,0)
+                node[left]{$x_{\i}$};
+        }
+        
+        % Output labels
+        \foreach \i in {1,2,3}
+        {            
+            \draw[->, shorten <=1pt] (Output-\i) -- ++(.5,0)
+                node[right]{$y_{\i}$};
+        }
+
+    \end{tikzpicture}
+
+
+\end{document}
