@@ -82,9 +82,9 @@
   \item Learning with quantum kernels
   \begin{enumerate}
     \item Quantum supervised ML models are kernel methods\cite{Schuld_2021_kernels}
-    \item Learning the right metric
-    \item Support Vector Machine (SVM)
+    \item Support Vector Machines (SVMs)
     \item Comparing quantum kernels and variational QC models
+    \item Choosing the right kernel
   \end{enumerate}
   \item Demos on PennyLane and Qiskit
 \end{enumerate}
@@ -259,8 +259,114 @@
 
 \begin{frame}
   \frametitle{Training with kernels}
+  \framesubtitle{The representer theorem}
 
+  \small
+  \begin{itemize}
+    \item The RKHS corresponds to the space of linear models in $\mathcal{F}$
+    \item Then we can search for the \emph{optimal model} directly in the RKHS
+    \item For optimal model we mean the one that minimizes the \emph{regularized empirical risk}
+    \[f_{\mathrm{opt}} = \mathrm{argmin}_{f\in F}\left\{ \hat{\mathcal{R}}\left( f \right) + g\left( \norm{f} \right)_F \right\},\]
+    where
+    \[\hat{\mathcal{R}}\left( f \right) = \frac{1}{M}\sum_{m=1}^M L\left( \mathbf{x}^{(m)}, y^{(m)}, f(\mathbf{x}^{(m)}) \right)\]
+  \end{itemize}
+
+  \begin{block}{Theorem 4: \emph{Representer theorem}}
+    Given a dataset $\mathcal{D}=\left\{ \left( \mathbf{x}^{(0)}, y^{(0)} \right), \dots, \left( \mathbf{x}^{(M-1)}, y^{(M-1)} \right) \right\}$, the $f\in \mathcal{F}$ that minimizes the empirical risk is a linear combination of $f\in \mathcal{F}$ centered in the datapoints, i.e.
+    \[f_{\mathrm{opt}}=\sum_{m=0}^{M-1} c_m f_{\mathbf{x}^{(m)}} = \sum_{m=0}^{M-1} c_m \kernel{\mathbf{x}^{(m)}}{\mathbf{x}}\]
+  \end{block}
   
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Training with kernels}
+  \framesubtitle{The representer theorem}
+  
+  \footnotesize
+  \begin{block}{Corollary for quantum models: \emph{optimal measurement}}
+    The measurement in $\mathcal{F}$ that minimizes the empirical risk is a linear expansion of the feature vectors of the data-points
+    \[\mathcal{M}_{\mathrm{opt}} = \sum_{m=0}^{M-1} c_m \rho\left( \mathbf{x}^{(m)} \right)\]
+  \end{block}
+
+  Consequences
+  \begin{itemize}
+    \item Optimizing any kernel-based model is at most a $M$-dimensional optimization problem.
+    \item For algorithms s.a. \emph{support vector machines} (SVMs), the data-points that `support' the optimal model are generally even less.
+    \begin{itemize}
+      \item More soon\dots
+    \end{itemize}
+    \item Given a feature map (a.k.a. data encoding in quantum), \emph{we are ensured that the optimal model lives in the space spanned by linear models in feature spaces} (i.e. kernel-based models)
+    \begin{itemize}
+      \item Often reachable with \emph{convex optimization}
+      \item More soon\dots
+    \end{itemize}
+  \end{itemize}
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{A note on regularization}
+
+  What is exactly $\norm{f}_F$? How do we \emph{operatively} compute norms in the RKHS?
+
+  \ \\
+  It turns out that
+  \begin{itemize}
+    \item Not only $\kernel{\mathbf{x}}{\cdot}$ builds the space where the model with minimum reg. emp. risk lives
+    \item It also defines a transformation $\Gamma:F\rightarrow L_2(\mathcal{X})$ from the RKHS to the square integrable function space, such that
+    \[\inner{f}{f}_F=\inner{\Gamma f}{\Gamma f}_{L_2} = \int_\mathcal{X} \left( \Gamma f(\mathbf{x})  \right)^2 \mathrm{d}\mathbf{x}\]
+    \item Which allows us to compute $\inner{f}{f}_F$
+    \begin{itemize}
+      \item we know which quantity of $f$ we penalize during regularization.
+    \end{itemize} 
+  \end{itemize}
+
+  \emph{Note}: each kernel induces a different RKHS and a different $\Gamma$
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Kernel-based optimization}
+
+  Kernel theory also gives us guarantees about optimization
+
+  \begin{block}{Theorem 5}
+    The problem of finding the kernel-based model that minimizes the regularized empirical risk is finite-dimensional and it is convex if the loss function is convex.
+  \end{block}
+
+  \footnotesize
+  The proof for quantum kernels is easy: by substituting 
+  \[f_{\mathrm{opt}}\left( \mathbf{x} \right) = \sum_m c_m \tr\left[ \rho\left( \mathbf{x}^{(m)} \right) \rho\left( \mathbf{x} \right)\right]\]
+  into
+  \[\mathrm{argmin}_{f\in F}\left\{ \hat{\mathcal{R}}\left( f \right) + \lambda \norm{f}^2_F \right\},\]
+  we obtain
+  \[\mathrm{argmin}_\mathbf{c} \frac{1}{M}\sum_m L\left( x^{(m)}, y^{(m)}, \sum_{m^\prime} c_{m^\prime} \kernel{\mathbf{x}^{(m)}}{\mathbf{x}^{(m^\prime)}} \right) + \lambda \mathbf{c}^\top \mathbf{K} \mathbf{c},\]
+  which is a convex optimization problem if $L$ is convex.
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Kernel-based optimization}
+
+  \begin{itemize}
+    \item We know $O(M^2)$ algorithms that can solve convex optimization
+    \item With fault-tolerant quantum computing, we can even reduce this to $O(M)$
+    \item We are guearanteed to find the global optimum
+  \end{itemize}
+
+  \ \\
+  But what actual ML algorithms use kernels? 
+  
+  \ \\
+  We will see one of them, \emph{support vector machines} in which kernels appear naturally in writing the optimization problem\footnote{Note that SVM can also be obtained by plugging the \emph{hinge loss} (convex) into the regularized empirical risk seen in the previous slide.}.
+
+  \ \\
+  But first\dots
 
 \end{frame}
 
