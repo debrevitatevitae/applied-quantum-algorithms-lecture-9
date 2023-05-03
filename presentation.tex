@@ -20,7 +20,8 @@
 \usepackage{qrcode}
 \usepackage{hyperref}
 \usepackage{physics}
-\usepackage{qcircuit}
+\usepackage{tikz}
+\usetikzlibrary{quantikz}
 
 \setbeamertemplate{navigation symbols}{} % remove navigation symbols
 \mode<presentation>{\usetheme[verticalbar=false]{tud}}
@@ -373,8 +374,179 @@
 
 \begin{frame}
   \frametitle{Quantum kernel circuits}
+  \framesubtitle{How do we compute quantum kernels on hardware?}
 
-  How do we compute quantum kernels on hardware?
+  \begin{center}
+    \begin{quantikz}
+      \lstick[4]{$\ket{0}^n$} &\gate[4]{U(\mathbf{x}^{(i)})} & \gate[4]{U(\mathbf{x}^{(j)})^\dagger} & \meter{} & \rstick[4]{$p\left( \ket{0}^n \right)$}\\
+      & & & \meter{} &  \\
+      & & & \meter{} &  \\
+      & & & \meter{} & 
+    \end{quantikz}
+  \end{center}
+
+  \small
+  Intuition:
+  \begin{itemize}
+    \item if $U(\mathbf{x}^{(i)})\ket{0}^n \approx U(\mathbf{x}^{(j)})\ket{0}^n$, then $p\left( \ket{0}^n \right) \approx 1$
+    \begin{itemize}
+      \item and if $\mathbf{x}^{(i)} = \mathbf{x}^{(j)}$, then $p\left( \ket{0}^n \right) = 1$
+    \end{itemize}
+    \item else, $p\left( \ket{0}^n \right) \neq 1$ or even $p\left( \ket{0}^n \right) = 0$ ($\mathbf{x}^{(i)},\, \mathbf{x}^{(j)}$ are orthogonal in feature space)
+  \end{itemize}
+
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Quantum kernel circuits}
+
+  \centering
+  \color{red} In binary classification, should our quantum $\kernel{\mathbf{x}^{(i)}}{\mathbf{x}^{(i)}}$ give us highly-spaced probabilities or a (maybe uniform) range of probabilities?
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Support vector machines}
+
+  \begin{columns}[onlytextwidth]
+    \begin{column}{.5\textwidth}
+      \centering
+      \includegraphics[width=\textwidth]{pics/supp-vecs.png}
+      \[\mathcal{X} \subset \R^N,\: \mathcal{Y} = \left\{ -1,1 \right\}^N\]
+    \end{column}
+    \begin{column}{.5\textwidth}
+      \small
+      \begin{itemize}
+        \item Assume linear separability (will be relaxed later)
+        \item There exists a hyperplane with normal $\mathbf{w}$ and bias $b$
+        \[f_\mathbf{w}(\mathbf{x}) = \mathbf{w}^\top \mathbf{x} + b\]
+        \item Because of linear separability
+      \[f\left( \mathbf{x}^{(m)} \right)y^{(m)} > 0\] 
+      \end{itemize}
+    \end{column}
+  \end{columns}
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Support vector machines}
+
+  \begin{columns}[onlytextwidth]
+    \begin{column}{.5\textwidth}
+      \centering
+      \includegraphics[width=\textwidth]{pics/supp-vecs.png}
+      \[\mathcal{X} \subset \R^N,\: \mathcal{Y} = \left\{ -1,1 \right\}^N\]
+    \end{column}
+    \begin{column}{.5\textwidth}
+      \small
+      The objective in SVMs is to find the hyperplane that maximizes the \emph{margin}, i.e. the distance from the hyperplane the closest points (\emph{support vectors})
+      \begin{itemize}
+        \item Support vectors
+        \[\mathbf{x}_s = \mathbf{x}_\mathrm{proj} + \Delta \frac{\mathbf{w}}{\norm{\mathbf{w}}}\]
+        \item Substitute in the hyperplane's equation
+        \[f\left( \mathbf{x}_s \right)=\mathbf{w}^\top\mathbf{x}_\mathrm{proj} + \Delta\norm{\mathbf{w}}\]
+        \item Since $\mathbf{w}^\top\mathbf{x}_\mathrm{proj}=0$, we find the margin to be
+        \[\Delta = \frac{f\left( \mathbf{x}_s \right)}{\norm{\mathbf{w}}}\]
+      \end{itemize}
+    \end{column}
+\end{columns}
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Support vector machines}
+  \framesubtitle{Primal optimization problem}
+
+  Now we're ready to define the SVM optimization problem\footnote{Formally, the problem is not well defined yet, because the length of $\mathbf{{w}}$ is not restricted. Therefore we add the additional condition that $\Delta \norm{\mathbf{w}}=1$}
+  \begin{align*}
+    \mathrm{minimize}& \quad\frac{1}{2}\norm{w}^2,\\
+    \mathrm{s.t.}& \quad y^{\left( m \right)}\left( \mathbf{w}^\top \mathbf{x}^{(m)} + b\right) > 0, \quad m={0,\dots, M-1},
+  \end{align*}
+  which is a \emph{quadratic convex optimization problem} in $N$ \emph{dimensions}.
+
+  \ \\
+  We can also write the Lagrangian of the problem
+  \[\mathcal{L}_{\mathrm{primal}}\left( \mathbf{w}, b, \mathbf{\alpha} \right) = \frac{1}{2}\norm{w}^2 + \sum_{m=0}^{M-1} \alpha_m y^{\left( m \right)}\left( \mathbf{w}^\top \mathbf{x}^{(m)} + b\right) \]
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Support vector machines}
+  \framesubtitle{Dual optimization problem}
+
+  2 caveats
+  \begin{itemize}
+    \item The primal form is hard to translate to the \emph{nonlinearly separable case}.
+    \item For high-dimensional data ($N \gg 1$), the problem of finding $N$ components of $\mathbf{w}$ gets expensive.
+  \end{itemize}
+
+  Can we rewrite the problem only in terms of $\alpha_m$?
+  \[\pdv{\mathcal{L}}{\mathbf{w}}=0 \rightarrow \mathbf{w} = \sum_{m=0}^{M-1} \alpha_m y^{(m)}\mathbf{x}^{(m)}\]
+  \[\pdv{\mathcal{L}}{b}=0 \rightarrow b = \sum_{m=0}^{M-1} \alpha_m y^{(m)}\]
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Support vector machines}
+  \framesubtitle{Dual optimization problem}
+
+  By plugging the expressions of $\mathbf{w}$ and $b$ into the Lagrangian, we get
+  \[\mathcal{L}_{\mathrm{dual}}\left( \mathbf{\alpha} \right) = \sum_{m=0}^{M-1}\alpha_m - \frac{1}{2}\sum_{m,m^\prime=0}^{M-1}\alpha_m\alpha_{m^\prime}y^{(m)}y^{(m^\prime)}\left( \mathbf{x}^{(m)} \right)^\top \mathbf{x}^{(m^\prime)}\]
+
+  \begin{itemize}
+    \item We still have a quadratic convex optimization problem (in the $\alpha_m$)
+    \item $\alpha_m$ determine $\mathbf{w}$ and $b$
+    \begin{itemize}
+      \item The problem is now $M$-dimensional (number of samples)
+      \item It turns out that $\alpha_m=0$, \emph{except at the support vectors}\footnote{More formally, this comes from the fact that the dual problem satisfies the Kush, Kuhn, Tucker (KKT) conditions}
+      \begin{itemize}
+        \item Intuitively, only the points close to the class boundary define the hyperplane
+      \end{itemize}
+    \end{itemize}
+  \end{itemize}
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Support vector machines}
+  \framesubtitle{Dual optimization problem}
+  
+  But let's look to the dual Lagrangian a bit more\dots
+
+  \[\mathcal{L}_{\mathrm{dual}}\left( \mathbf{\alpha} \right) = \sum_{m=0}^{M-1}\alpha_m - \frac{1}{2}\sum_{m,m^\prime=0}^{M-1}\alpha_m\alpha_{m^\prime}y^{(m)}y^{(m^\prime)}\left( \mathbf{x}^{(m)} \right)^\top \mathbf{x}^{(m^\prime)}\]
+
+  \ \\
+  \begin{center}
+    \textcolor{red}{Is there anything that suggests us an extension to the non-linearly separable case?}
+
+    \emph{Tip}: think to kernels
+  \end{center}
+
+  
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Support vector machines}
+  \framesubtitle{Dual optimization problem}
+  
+  \[\mathbf{x} \rightarrow \phi\left( \mathbf{x} \right) \quad \text{(feature map)}\]
+  \[\left( \mathbf{x}^{(m)} \right)^\top \mathbf{x}^{(m^\prime)} \rightarrow \inner{\phi\left( \mathbf{x}^{(m)} \right)}{\phi\left( \mathbf{x}^{(m^\prime)} \right)} = \kernel{\mathbf{x}^{(m)}}{\mathbf{x}^{(m^\prime)}}\]
+
+  \ \\
+  Thanks to the inner product structure of the dual SVM, we can plug-in a kernel in place of $\left( \mathbf{x}^{(m)} \right)^\top \mathbf{x}^{(m^\prime)}$ and we can deal with non-linear separability.
+  \begin{itemize}
+    \item Provided that the feature map $\phi$ leads to linear separability in feature space.
+  \end{itemize}
+  
 
 \end{frame}
 
