@@ -85,7 +85,7 @@
     \item Quantum supervised ML models are kernel methods\cite{Schuld_2021_kernels}
     \item Support Vector Machines (SVMs)
     \item Comparing quantum kernels and variational QC models
-    % \item Choosing the right kernel
+    \item Selecting the right kernel
   \end{enumerate}
   \item Demo
 \end{enumerate}
@@ -608,7 +608,7 @@
     \item<3-> $\alpha_m$ determine $\mathbf{w}$ and $b$
     \begin{itemize}
       \item<4-> The problem is now $M$-dimensional (number of samples)
-      \item<5-> It turns out that $\alpha_m=0$, \emph{except at the support vectors}\footnote{More formally, this comes from the fact that the dual problem satisfies the Kush, Kuhn, Tucker (KKT) conditions}
+      \item<5-> It turns out that $\alpha_m=0$, \emph{except at the support vectors}\footnote{More formally, this comes from the fact that the dual problem satisfies the Karush, Kuhn, Tucker (KKT) conditions}
       \begin{itemize}
         \item Intuitively, only the points close to the class boundary define the hyperplane
       \end{itemize}
@@ -655,6 +655,114 @@
   \end{itemize}
   
 
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Main differences between variational QML and quantum kernels}
+
+  \small
+  \begin{table}[htbp]
+    \centering\begin{tabular}{lll}
+      & Variational QML & Quantum kernels \\
+      \hline \\
+      optimization & convex & (highly) non-convex \\
+      time-complexity: training & heuristic & $O(M^2)$\footnote{due to kernel matrix evaluation} \\
+      barren plateaus & yes & no \\
+      hyperparameters & model and optimizer & model only \\
+      time-complexity: model evaluation & $O(1)$ & $O(M)$\footnote{in SVM: $y = \sum_{m=0}^{M-1}\alpha_m y^{(m)} \kernel{\mathbf{x}^{(m)}}{\mathbf{x}} + b$}\\
+      \hline
+    \end{tabular}
+  \end{table}
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Selecting the right kernel}
+
+  Information about the problem can suggest the right kernel\cite{Liu_Arunachalam_Temme_21}. If not, some agnostic techniques can help\dots
+  \begin{enumerate}
+    \item Quantum metric learning\cite{Lloyd2020a}
+    \item Kernel-target alignment\cite{Wang2012,Hubregtsen_2022}
+  \end{enumerate}
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Selecting the right kernel}
+  \framesubtitle{Quantum metric learning}
+
+  \emph{Idea}: learning the embedding that maximizes \emph{intra}-class overlap, while minimizing \emph{inter}-class overlap.
+
+  \ \\
+  Part of the embedding has free parameters
+
+  \ \\
+  \centering
+  \includegraphics[width=.6\textwidth]{pics/lloyd-learnable-embedding.png}
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Selecting the right kernel}
+  \framesubtitle{Quantum metric learning}
+
+  Consider binary classification
+  \begin{enumerate}
+    \item Ensemble of all states belonging to the $+1$ class: $\rho = \frac{1}{M_+}\sum_i \ketbra{\psi^{(i,+)}}$
+    \item Ensemble of all states belonging to the $-1$ class: $\rho = \frac{1}{M_-}\sum_i \ketbra{\psi^{(i,-)}}$
+  \end{enumerate}
+
+  \ \\
+  \emph{Maximize} either
+  \begin{itemize}
+    \item Hilbert-Schmidt distance: $D_{\mathrm{hs}}\left( \rho,\sigma \right) = \tr\left[ \left( \rho - \sigma \right)\left( \rho - \sigma \right) \right]$
+    \item Trace distance: $D_{\mathrm{tr}}\left( \rho,\sigma \right) = \tr\left[ \abs{ \rho - \sigma } \right]$
+  \end{itemize}
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Selecting the right kernel}
+  \framesubtitle{Kernel-target alignment}
+
+  \small
+  \begin{exampleblock}{Kernel alignment}
+    (Normalized) inner product between kernels. If $\mathbf{K}_1$ and $\mathbf{K}_2$ are matrices corresponding to two kernel functions, computed with the same data-points:
+    \[A\left( \mathbf{K}_1, \mathbf{K}_2 \right) = \frac{\inner{\mathbf{K}_1}{\mathbf{K}_2}_F}{\sqrt{\inner{\mathbf{K}_1}{\mathbf{K}_1}_F \inner{\mathbf{K}_2}{\mathbf{K}_2}_F}},\]
+    where $\inner{\cdot}{\cdot}_F$ is the \emph{Frobenius inner product}.
+  \end{exampleblock}
+
+  \ \\
+  In binary classification, we can also define the \emph{target kernel} matrix, as a matrix of $\pm 1$ depending on whether two datapoints have equal or opposite labels
+  \[\mathbf{K}^* = \mathbf{y}^\top \mathbf{y}\]
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Selecting the right kernel}
+  \framesubtitle{Kernel-target alignment}
+
+  \small
+  \begin{exampleblock}{Kernel-target alignment (KTA)}
+    Kernel-alignment with the target kernel as second argument
+    \[A\left( \mathbf{K}, \mathbf{K}^* \right) - \frac{\mathbf{y}^\top \mathbf{K} \mathbf{y}}{M \norm{\mathbf{K}}_F}\]
+  \end{exampleblock}
+
+  \ \\
+  If the kernel is parametrized by a vector $\theta$ of parameters, then we can choose
+  \[\theta^* = \mathrm{argmax}_\theta A\left( \mathbf{K}_\theta, \mathbf{K}^* \right)\]
+
+  \ \\
+  Given that
+  \[\grad_\theta A\left( \mathbf{K}_\theta, \mathbf{K}^* \right) = \frac{\inner{\pdv{\mathbf{K}_\theta}{\theta}}{\mathbf{y}^\top \mathbf{y}}_F\inner{\mathbf{K}_\theta}{\mathbf{K}_\theta}_F - \inner{\mathbf{K}_\theta}{\mathbf{y}^\top \mathbf{y}}_F \inner{\pdv{\mathbf{K}_\theta}{\theta}}{\mathbf{K}_\theta}_F}{M\inner{\mathbf{K}_\theta}{\mathbf{K}_\theta}_F^{3/2}},\]
+
+  we can maximize $A\left( \mathbf{K}, \mathbf{K}^* \right)$ using any gradient-based algorithm.
 \end{frame}
 
 % \section{Conclusion}
